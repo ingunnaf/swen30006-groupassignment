@@ -1,0 +1,33 @@
+Meeting 1 notes: 
+
+Present: Ingunn, Crystal & Cindy
+Time: Friday April 24th, 7:45pm-8:45pm Melbourne time
+
+Modified Zoom chat record {
+
+link for description generate uml diagrams from java code: 
+https://stackoverflow.com/questions/51786/how-to-generate-uml-diagrams-especially-sequence-diagrams-from-java-code/824221#824221 statistics tracking: 
+
+Statistics tracking requirements: 
+1) keep track of how many normal packages they deliver
+2) keep track of how many fragile packages they deliver
+3) total weight of packages delivered using normal mode
+4) total weight of packages delivered using caution mode
+5) total amount of time spent wrapping and unwrapping fragile items
+
+notes on wrapping, delivering fragile items :
+need to implement functionality to wrap and unwrap items
+wrapping is 2 units of time
+unwrapping is one unit of time
+once a special, fragile item is being delivered on a floor, no other robots can enter the floor at that time
+
+where do we implement this functionality? 
+MailPool stores the robots, so perhaps this would be the place to ensure that robots delivering fragile items get the floor to themself
+
+}
+
+next meeting: Monday April 27th, 6pm Melbourne time
+to do before next meeting:
+- generate a uml diagram from the existing javacode (Crystal)
+- do a domain class model (Ingunn & Cindy)
+
