@@ -32,9 +32,19 @@ public class Robot {
     private MailItem specialArm = null;
     
     private int deliveryCounter;
-    
 
-    /**
+    /* here are variables for stats*
+     */
+
+	private double fragileWeight = 0;
+	private double normalWeight = 0;
+	private int fragileTotal = 0;
+	private int normalTotal = 0;
+	private int wrapTime = 0;
+
+
+
+	/**
      * Initiates the robot's location at the start to be at the mailroom
      * also set it to be waiting for mail.
      * @param behaviour governs selection of mail items for delivery and behaviour on priority arrivals
@@ -93,6 +103,7 @@ public class Robot {
     			boolean flagWrap = true;
     			if(specialArm!=null) {
     				if (!specialArm.isWrapped()) {
+    					wrapTime++;
     					specialArm.wrap();
     					flagWrap = false;
     				}
@@ -106,6 +117,9 @@ public class Robot {
     					this.fragileProtocol();
     				}
     				else {
+    					//stats tracking
+						normalTotal++;
+						normalWeight += deliveryItem.getWeight();
     					delivery.deliver(deliveryItem);
                     	deliveryItem = null;
                     	deliveryCounter++;
@@ -188,6 +202,10 @@ public class Robot {
     	
     	if(this.specifications.floorIsEmpty(destination_floor)) {
     		if(this.specialArm.isWrapped()) {
+    			//stats tracking
+    			fragileWeight += specialArm.getWeight();
+    			fragileTotal ++;
+    			//stats tracking end
     			delivery.deliver(this.specialArm);
             	this.specialArm = null;
             	specifications.allowAccess(destination_floor);
@@ -207,6 +225,7 @@ public class Robot {
             	}
     		}
     		else {
+    			wrapTime+=2;
     			specialArm.unwrap();
     		}
     	}
@@ -300,5 +319,25 @@ public class Robot {
 		if (specialArm.weight > INDIVIDUAL_MAX_WEIGHT) throw new ItemTooHeavyException();
 	}
 
+
+	public double getFragileWeight () {
+		return fragileWeight;
+	}
+
+	public double getNormalWeight () {
+		return normalWeight;
+	}
+
+	public int getFragileTotal () {
+		return fragileTotal;
+	}
+
+	public int getNormalTotal () {
+		return normalTotal;
+	}
+
+	public int getWrapTime () {
+		return wrapTime;
+	}
 
 }

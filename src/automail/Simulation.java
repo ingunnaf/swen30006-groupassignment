@@ -29,6 +29,14 @@ public class Simulation {
     private static ArrayList<MailItem> MAIL_DELIVERED;
     private static double total_score = 0;
 
+	//stats tracking
+	private static double fragileWeight = 0;
+	private static double normalWeight = 0;
+	private static int fragileTotal = 0;
+	private static int normalTotal = 0;
+	private static int wrapTime = 0;
+	//stats tracking code end
+
     public static void main(String[] args) throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
     	Properties automailProperties = new Properties();
 		// Default properties
@@ -120,6 +128,16 @@ public class Simulation {
 			}
             Clock.Tick();
         }
+		for (int i=0; i<robots; i++) {
+			//System.out.println(automail.robots[i].getNormalPackage());
+			//System.out.println(normalPackage);
+			fragileWeight += automail.robots[i].getFragileWeight();
+			normalWeight += automail.robots[i].getNormalWeight();
+			fragileTotal += automail.robots[i].getFragileTotal();
+			normalTotal += automail.robots[i].getNormalTotal();
+			//System.out.println(normalPackage);
+			wrapTime += automail.robots[i].getWrapTime();
+		}
         printResults();
     }
     
@@ -155,5 +173,10 @@ public class Simulation {
         System.out.println("T: "+Clock.Time()+" | Simulation complete!");
         System.out.println("Final Delivery time: "+Clock.Time());
         System.out.printf("Final Score: %.2f%n", total_score);
+		System.out.println("Non-fragile items delivered: "+normalTotal);
+		System.out.println("Fragile items delivered: "+fragileTotal);
+		System.out.println("Non-fragile items weight: "+normalWeight);
+		System.out.println("Fragile items weight: "+fragileWeight);
+		System.out.println("Time spent wrapping/unwrapping: "+wrapTime);
     }
 }
