@@ -20,6 +20,10 @@ public class MailItem {
     protected final int weight;
     /** The fragile property */
     protected final boolean fragile;
+    
+    private boolean wrapped=false;
+    private int timeWrapBegin = -1;
+    private int timeUnwrapBegin = -1;
 
     /**
      * Constructor for a MailItem
@@ -33,6 +37,7 @@ public class MailItem {
         this.arrival_time = arrival_time;
         this.weight = weight;
         this.fragile = isFragile;
+        this.wrapped = false; 
     }
 
     @Override
@@ -82,4 +87,41 @@ public class MailItem {
 		if (hash == null) { hash = count++; hashMap.put(hash0, hash); }
 		return hash;
 	}
+	
+	public boolean isFragile() {
+		if (this.fragile) {
+			return true;
+		}
+		return false;
+	}
+	
+	
+	public void wrap() {
+		if (timeWrapBegin==-1) {
+			timeWrapBegin = 1;
+		}
+		if (timeWrapBegin<3) {
+			timeWrapBegin++;
+		}
+		else {
+			this.wrapped = true;
+			timeWrapBegin=-1;
+		}
+	}
+	
+	public void unwrap() {
+		if (timeUnwrapBegin==-1) {
+			timeUnwrapBegin = 1;
+		}
+		if (timeWrapBegin<2) {
+			timeWrapBegin++;
+		}
+		this.wrapped = false;
+		timeUnwrapBegin=-1;
+	}
+	
+	public boolean isWrapped() {
+		return this.wrapped;
+	}
+	
 }

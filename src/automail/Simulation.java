@@ -55,8 +55,8 @@ public class Simulation {
 		//Seed
 		String seedProp = automailProperties.getProperty("Seed");
 		// Floors
-		Building.FLOORS = Integer.parseInt(automailProperties.getProperty("Floors"));
-        System.out.println("Floors: " + Building.FLOORS);
+		BuildingSpecs.FLOORS = Integer.parseInt(automailProperties.getProperty("Floors"));
+        System.out.println("Floors: " + BuildingSpecs.FLOORS);
 		// Mail_to_Create
 		MAIL_TO_CREATE = Integer.parseInt(automailProperties.getProperty("Mail_to_Create"));
         System.out.println("Mail_to_Create: " + MAIL_TO_CREATE);

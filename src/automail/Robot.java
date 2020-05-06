@@ -18,14 +18,18 @@ public class Robot {
     protected final String id;
     /** Possible states the robot can be in */
     public enum RobotState { DELIVERING, WAITING, RETURNING }
+    public enum NextDelivery { ARMS, DELIVITEM}
     public RobotState current_state;
+    public NextDelivery nextDelivery;
     private int current_floor;
     private int destination_floor;
     private IMailPool mailPool;
     private boolean receivedDispatch;
+    private BuildingSpecs specifications;
     
     private MailItem deliveryItem = null;
     private MailItem tube = null;
+    private MailItem specialArm = null;
     
     private int deliveryCounter;
     
@@ -41,11 +45,12 @@ public class Robot {
     	id = "R" + hashCode();
         // current_state = RobotState.WAITING;
     	current_state = RobotState.RETURNING;
-        current_floor = Building.MAILROOM_LOCATION;
+        current_floor = BuildingSpecs.MAILROOM_LOCATION;
         this.delivery = delivery;
         this.mailPool = mailPool;
         this.receivedDispatch = false;
         this.deliveryCounter = 0;
+        this.specifications = new BuildingSpecs();
     }
     
     public void dispatch() {
@@ -61,7 +66,7 @@ public class Robot {
     		/** This state is triggered when the robot is returning to the mailroom after a delivery */
     		case RETURNING:
     			/** If its current position is at the mailroom, then the robot should change state */
-                if(current_floor == Building.MAILROOM_LOCATION){
+                if(current_floor == BuildingSpecs.MAILROOM_LOCATION){
                 	if (tube != null) {
                 		mailPool.addToPool(tube);
                         System.out.printf("T: %3d >  +addToPool [%s]%n", Clock.Time(), tube.toString());
@@ -72,7 +77,7 @@ public class Robot {
                 	changeState(RobotState.WAITING);
                 } else {
                 	/** If the robot is not at the mailroom floor yet, then move towards it! */
-                    moveTowards(Building.MAILROOM_LOCATION);
+                    moveTowards(BuildingSpecs.MAILROOM_LOCATION);
                 	break;
                 }
     		case WAITING:
@@ -85,28 +90,44 @@ public class Robot {
                 }
                 break;
     		case DELIVERING:
-    			if(current_floor == destination_floor){ // If already here drop off either way
+    			boolean flagWrap = true;
+    			if(specialArm!=null) {
+    				if (!specialArm.isWrapped()) {
+    					specialArm.wrap();
+    					flagWrap = false;
+    				}
+    			}
+    			
+    			
+    			
+    			if(current_floor == destination_floor && flagWrap){ // If already here drop off either way
                     /** Delivery complete, report this to the simulator! */
-                    delivery.deliver(deliveryItem);
-                    deliveryItem = null;
-                    deliveryCounter++;
-                    if(deliveryCounter > 2){  // Implies a simulation bug
-                    	throw new ExcessiveDeliveryException();
-                    }
-                    /** Check if want to return, i.e. if there is no item in the tube*/
-                    if(tube == null){
-                    	changeState(RobotState.RETURNING);
-                    }
-                    else{
-                        /** If there is another item, set the robot's route to the location to deliver the item */
-                        deliveryItem = tube;
-                        tube = null;
-                        setRoute();
-                        changeState(RobotState.DELIVERING);
-                    }
-    			} else {
+    				if (nextDelivery == NextDelivery.ARMS) {
+    					this.fragileProtocol();
+    				}
+    				else {
+    					delivery.deliver(deliveryItem);
+                    	deliveryItem = null;
+                    	deliveryCounter++;
+                    	if(deliveryCounter > 3){  // Implies a simulation bug
+                    		throw new ExcessiveDeliveryException();
+                    	}
+                    	/** Check if want to return, i.e. if there is no item in the tube*/
+                    	if(tube == null){
+                    		changeState(RobotState.RETURNING);
+                    	}
+                    	else{
+                        	/** If there is another item, set the robot's route to the location to deliver the item */
+                        	deliveryItem = tube;
+                        	tube = null;
+                        	setRoute();
+                        	changeState(RobotState.DELIVERING);
+                    	}
+    				}
+    				
+    			} else if (flagWrap) {
 	        		/** The robot is not at the destination yet, move towards it! */
-	                moveTowards(destination_floor);
+    				moveTowards(destination_floor);
     			}
                 break;
     	}
@@ -117,24 +138,94 @@ public class Robot {
      */
     private void setRoute() {
         /** Set the destination floor */
-        destination_floor = deliveryItem.getDestFloor();
+    	if(specialArm!=null && deliveryItem!=null) {
+    		if(specialArm.getDestFloor()>deliveryItem.getDestFloor()) {
+    			destination_floor = specialArm.getDestFloor();
+    			nextDelivery = NextDelivery.ARMS;
+    		}
+    		else {
+    			destination_floor = deliveryItem.getDestFloor();
+    			nextDelivery = NextDelivery.DELIVITEM;
+    		}
+    	}
+    	else if (specialArm!=null) {
+    		destination_floor = specialArm.getDestFloor();
+			nextDelivery = NextDelivery.ARMS;
+    	}
+    	else {
+    		destination_floor = deliveryItem.getDestFloor();
+    		nextDelivery = NextDelivery.DELIVITEM;
+    	}
     }
 
+    
     /**
-     * Generic function that moves the robot towards the destination
+     * Generic function that moves the robot towards the destination if the destination is allowable
      * @param destination the floor towards which the robot is moving
      */
     private void moveTowards(int destination) {
+    	specifications.leavingFloor(current_floor);
         if(current_floor < destination){
-            current_floor++;
+        	if(specifications.isAccessAllowed(current_floor+1)) {
+        		current_floor++;
+        	}
         } else {
-            current_floor--;
+        	if(specifications.isAccessAllowed(current_floor-1)) {
+        		current_floor--;
+        	}
         }
+        specifications.enteringFloor(current_floor);
     }
+    
+    
+    
+    private void fragileProtocol() throws ExcessiveDeliveryException {
+    	/*
+		if fragile item, call clear floor check floor is clear every turn and then unwrap and deliver
+		else deliver normal item
+		*/
+    	this.specifications.clearFloor(this.destination_floor);
+    	
+    	if(this.specifications.floorIsEmpty(destination_floor)) {
+    		if(this.specialArm.isWrapped()) {
+    			delivery.deliver(this.specialArm);
+            	this.specialArm = null;
+            	specifications.allowAccess(destination_floor);
+            	deliveryCounter++;
+            	if(deliveryCounter > 3){  // Implies a simulation bug
+            		throw new ExcessiveDeliveryException();
+            	}
+            	/** Check if want to return, i.e. if there is no item in the tube*/
+            	if(this.isEmpty()){
+            		changeState(RobotState.RETURNING);
+            	}
+            	else{
+                	/** If there is another item, set the robot's route to the location to deliver the item */
+            		nextDelivery = NextDelivery.DELIVITEM;
+                	setRoute();
+                	changeState(RobotState.DELIVERING);	
+            	}
+    		}
+    		else {
+    			specialArm.unwrap();
+    		}
+    	}
+    	
+    }
+    	
     
     private String getIdTube() {
     	return String.format("%s(%1d)", id, (tube == null ? 0 : 1));
     }
+    
+    private String getIdSpecialArm() {
+    	return String.format("%s(%1d)", id, (specialArm == null ? 0 : 1));
+    }
+    
+    private String getIdDeliveryItem() {
+    	return String.format("%s(%1d)", id, (deliveryItem == null ? 0 : 1));
+    }
+    
     
     /**
      * Prints out the change in state
@@ -143,16 +234,35 @@ public class Robot {
     private void changeState(RobotState nextState){
     	assert(!(deliveryItem == null && tube != null));
     	if (current_state != nextState) {
-            System.out.printf("T: %3d > %7s changed from %s to %s%n", Clock.Time(), getIdTube(), current_state, nextState);
+    		if (nextDelivery==NextDelivery.DELIVITEM) {
+    			System.out.printf("T: %3d > %7s changed from %s to %s%n", Clock.Time(), getIdTube(), current_state, nextState);
+    		}
+    		else {
+    			System.out.printf("T: %3d > %7s changed from %s to %s%n", Clock.Time(), getIdSpecialArm(), current_state, nextState);
+    		}
     	}
     	current_state = nextState;
     	if(nextState == RobotState.DELIVERING){
-            System.out.printf("T: %3d > %9s-> [%s]%n", Clock.Time(), getIdTube(), deliveryItem.toString());
+    		if (nextDelivery==NextDelivery.DELIVITEM) {
+    			System.out.printf("T: %3d > %9s-> [%s]%n", Clock.Time(), getIdTube(), deliveryItem.toString());
+    		}
+    		else {
+    			System.out.printf("T: %3d > %9s-> [%s]%n", Clock.Time(), getIdSpecialArm(), specialArm.toString());
+    		}
     	}
     }
+    
 
 	public MailItem getTube() {
 		return tube;
+	}
+	
+	public MailItem getHand() {
+		return deliveryItem;
+	}
+	
+	public MailItem getArm() {
+		return specialArm;
 	}
     
 	static private int count = 0;
@@ -167,7 +277,7 @@ public class Robot {
 	}
 
 	public boolean isEmpty() {
-		return (deliveryItem == null && tube == null);
+		return (deliveryItem == null && tube == null && specialArm == null);
 	}
 
 	public void addToHand(MailItem mailItem) throws ItemTooHeavyException, BreakingFragileItemException {
@@ -183,5 +293,12 @@ public class Robot {
 		tube = mailItem;
 		if (tube.weight > INDIVIDUAL_MAX_WEIGHT) throw new ItemTooHeavyException();
 	}
+	
+	public void addToSpecialArm(MailItem mailItem) throws ItemTooHeavyException{
+		assert(specialArm == null);
+		specialArm = mailItem;
+		if (specialArm.weight > INDIVIDUAL_MAX_WEIGHT) throw new ItemTooHeavyException();
+	}
+
 
 }
