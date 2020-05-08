@@ -109,7 +109,7 @@ public class Simulation {
         }
         Integer seed = seedMap.get(true);
         System.out.println("Seed: " + (seed == null ? "null" : seed.toString()));
-        Automail automail = new Automail(mailPool, new ReportDelivery(), robots);
+        Automail automail = new Automail(mailPool, new ReportDelivery(), robots, CAUTION_ENABLED);
         MailGenerator mailGenerator = new MailGenerator(MAIL_TO_CREATE, MAIL_MAX_WEIGHT, automail.mailPool, seedMap);
         
         /** Initiate all the mail */
@@ -139,6 +139,9 @@ public class Simulation {
 			wrapTime += automail.robots[i].getWrapTime();
 		}
         printResults();
+        if(STATISTICS_ENABLED) {
+        	printStatistics();
+        }
     }
     
     static class ReportDelivery implements IMailDelivery {
@@ -173,7 +176,10 @@ public class Simulation {
         System.out.println("T: "+Clock.Time()+" | Simulation complete!");
         System.out.println("Final Delivery time: "+Clock.Time());
         System.out.printf("Final Score: %.2f%n", total_score);
-		System.out.println("Non-fragile items delivered: "+normalTotal);
+    }
+    
+    public static void printStatistics() {
+    	System.out.println("Non-fragile items delivered: "+normalTotal);
 		System.out.println("Fragile items delivered: "+fragileTotal);
 		System.out.println("Non-fragile items weight: "+normalWeight);
 		System.out.println("Fragile items weight: "+fragileWeight);

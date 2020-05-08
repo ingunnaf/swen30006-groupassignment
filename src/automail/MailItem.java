@@ -23,7 +23,6 @@ public class MailItem {
     
     private boolean wrapped=false;
     private int timeWrapBegin = -1;
-    private int timeUnwrapBegin = -1;
 
     /**
      * Constructor for a MailItem
@@ -88,38 +87,44 @@ public class MailItem {
 		return hash;
 	}
 	
+
+    /**
+    *
+    * @return if a mail item is fragile
+    */
 	public boolean isFragile() {
-		if (this.fragile) {
-			return true;
-		}
-		return false;
+		return this.fragile;
 	}
 	
 	
+	/**
+    *
+    * will wrap an object after two calls
+    */
 	public void wrap() {
 		if (timeWrapBegin==-1) {
 			timeWrapBegin = 1;
 		}
-		if (timeWrapBegin<3) {
-			timeWrapBegin++;
-		}
 		else {
+			timeWrapBegin++;
 			this.wrapped = true;
 			timeWrapBegin=-1;
 		}
 	}
 	
+	/**
+    *
+    * will unwrap an object after one call
+    */
 	public void unwrap() {
-		if (timeUnwrapBegin==-1) {
-			timeUnwrapBegin = 1;
-		}
-		if (timeWrapBegin<2) {
-			timeWrapBegin++;
-		}
 		this.wrapped = false;
-		timeUnwrapBegin=-1;
 	}
 	
+	
+	/**
+    *
+    * @return if a mail item is wrapped
+    */
 	public boolean isWrapped() {
 		return this.wrapped;
 	}
