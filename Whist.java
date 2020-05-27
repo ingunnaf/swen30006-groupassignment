@@ -1,23 +1,13 @@
-//Separate out a properties document
-
 // Whist.java
 
 import ch.aplu.jcardgame.*;
 import ch.aplu.jgamegrid.*;
-import strategies.IMailPool;
-import strategies.MailPool;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-import Whist.Rank;
-import Whist.Suit;
-import automail.Building;
-import automail.Clock;
 
 @SuppressWarnings("serial")
 public class Whist extends CardGame {
@@ -59,18 +49,13 @@ public class Whist extends CardGame {
   public boolean rankGreater(Card card1, Card card2) {
 	  return card1.getRankId() < card2.getRankId(); // Warning: Reverse rank order of cards (see comment on enum)
   }
-
-		
-
-  private static String version;
-  public static int nbPlayers;
-  public static int nbStartCards;
-  public static int winningScore;
-  private static int handWidth;
-  private static int trickWidth;
-  private static int thinkingTime;
-  private static boolean enforceRules;
-
+	 
+  private final String version = "1.0";
+  public final int nbPlayers = 4;
+  public final int nbStartCards = 13;
+  public final int winningScore = 11;
+  private final int handWidth = 400;
+  private final int trickWidth = 40;
   private final Deck deck = new Deck(Suit.values(), Rank.values(), "cover");
   private final Location[] handLocations = {
 			  new Location(350, 625),
@@ -84,31 +69,53 @@ public class Whist extends CardGame {
 			  new Location(575, 25),
 			  new Location(650, 575)
 	  };
-  private Actor[] scoreActors = {null, null, null, null };
+  //private Actor[] scoreActors = {null, null, null, null };
+
+  private Player[] players = {null, null, null, null};
+  /** The above line is neweewwwwww and should replace scoreActors, hands and scores arrays*/
+
   private final Location trickLocation = new Location(350, 350);
   private final Location textLocation = new Location(350, 450);
-  private Hand[] hands;
+  private final int thinkingTime = 2000;
+  private Hand[] hands; //used to deal out the deck, but subsequently the hands are stored within players
   private Location hideLocation = new Location(-500, - 500);
   private Location trumpsActorLocation = new Location(50, 50);
+  private boolean enforceRules=false;
 
   public void setStatus(String string) { setStatusText(string); }
   
-private int[] scores = new int[nbPlayers];
+//private int[] scores = new int[nbPlayers];
 
 Font bigFont = new Font("Serif", Font.BOLD, 36);
 
-private void initScore() {
+
+
+  private void createPlayers(String p0, String p1, String p2, String p3) {
+  	/** The arguments for this function should be modified to be enumerations of the different
+	 * types of players we will create in each specific game - they should be loaded in from properties file*/
+  	players[0] = new Player(p0);
+  	players[1] = new Player(p1);
+  	players[2] = new Player(p2);
+  	players[3] = new Player(p3);
+  }
+  private void initScore() {
 	 for (int i = 0; i < nbPlayers; i++) {
-		 scores[i] = 0;
-		 scoreActors[i] = new TextActor("0", Color.WHITE, bgColor, bigFont);
-		 addActor(scoreActors[i], scoreLocations[i]);
+
+		 //scores[i] = 0;
+		 players[i].setScore(0);
+		 //scoreActors[i] = new TextActor("0", Color.WHITE, bgColor, bigFont);
+		 players[i].setScoreActor(new TextActor("0", Color.WHITE, bgColor, bigFont));
+		 addActor(players[i].getScoreActor(), scoreLocations[i]);
 	 }
   }
-
+/** The grey was the old and has been commented out, the lines there are the modification*/
 private void updateScore(int player) {
-	removeActor(scoreActors[player]);
-	scoreActors[player] = new TextActor(String.valueOf(scores[player]), Color.WHITE, bgColor, bigFont);
-	addActor(scoreActors[player], scoreLocations[player]);
+	//removeActor(scoreActors[player]);
+	removeActor(players[player].getScoreActor());
+	players[player].setScoreActor(new TextActor(String.valueOf(scores[player]), Color.WHITE, bgColor, bigFont));
+	//scoreActors[player] = new TextActor(String.valueOf(scores[player]), Color.WHITE, bgColor, bigFont);
+	//addActor(scoreActors[player], scoreLocations[player]);
+	addActor(players[player].getScoreActor(), scoreLocations[player]);
 }
 
 private Card selected;
@@ -229,10 +236,12 @@ private Optional<Integer> playRound() {  // Returns winner, if any
 	return Optional.empty();
 }
 
-  public Whist(){ 
+  public Whist()
+  {
     super(700, 700, 30);
     setTitle("Whist (V" + version + ") Constructed for UofM SWEN30006 with JGameGrid (www.aplu.ch)");
     setStatusText("Initializing...");
+    createPlayers();
     initScore();
     Optional<Integer> winner;
     do { 
@@ -244,35 +253,10 @@ private Optional<Integer> playRound() {  // Returns winner, if any
     refresh();
   }
 
-  public static void main(String[] args) throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
-	  Properties whistProperties = new Properties();
-	  
-	  //Read properties
-	  FileReader inStream = null;
-	  try {
-		  inStream = new FileReader("whist.properties");
-		  whistProperties.load(inStream);
-	  } finally {
-		  if (inStream != null) {
-			  inStream.close();
-			  }
-	  }
-	  
-
-	version = whistProperties.getProperty("version");
-	nbPlayers = Integer.parseInt(whistProperties.getProperty("nbPlayers"));
-	nbStartCards = Integer.parseInt(whistProperties.getProperty("nbStartCards"));
-	winningScore = Integer.parseInt(whistProperties.getProperty("winningScore"));
-	handWidth = Integer.parseInt(whistProperties.getProperty("handWidth"));
-	trickWidth = Integer.parseInt(whistProperties.getProperty("trickWidth"));
-	thinkingTime = Integer.parseInt(whistProperties.getProperty("thinkingTime"));
-	enforceRules = Boolean.parseBoolean(whistProperties.getProperty("enforceRules"));
-	  
+  public static void main(String[] args)
+  {
 	// System.out.println("Working Directory = " + System.getProperty("user.dir"));
     new Whist();
-    
-  	  
-  	//End read properties
   }
 
 }
