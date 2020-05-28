@@ -1,27 +1,36 @@
-public class Player extends Actor {
+import ch.aplu.jcardgame.*;
+import ch.aplu.jgamegrid.*;
+
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+
+
+
+public class Player {
     //
 
     private Hand hand;
     private int score;
     private Actor scoreActor;
 
-    public Player(Hand hand, Actor scoreActor) { // should it generate a hand based on a hand or based on a full/ remaining deck?
+    static final Random random = ThreadLocalRandom.current();
+
+    public Player(Hand hand) { // should it generate a hand based on a hand or based on a full/ remaining deck?
         this.hand = hand; //
         this.score = 0;
-        this.scoreActor = scoreActor;
     }
 
-    // return random Card from Hand
-    public Card randomCard(Hand hand){
-        int x = random.nextInt(hand.getNumberOfCards());
-        return hand.get(x);
+    // return random Card from players hand
+    public Card randomCard(){
+        int x = random.nextInt(this.hand.getNumberOfCards());
+        return this.hand.get(x);
     }
 
     // return random Card from ArrayList
-    public static Card randomCard(ArrayList<Card> list){
+    /**public static Card randomCard(ArrayList<Card> list){
         int x = random.nextInt(list.size());
         return list.get(x);
-    }
+    }*/
 
     public void setScore(int score) {
         this.score = score;
@@ -31,8 +40,20 @@ public class Player extends Actor {
         this.scoreActor = textActor;
     }
 
-    public TextActor getScoreActor() {
+    public Actor getScoreActor() {
         return this.scoreActor;
+    }
+
+    public int getScore() {
+        return this.score;
+    }
+
+    public Hand getHand() {
+        return this.hand;
+    }
+
+    public void incrementScore() {
+        this.score += 1;
     }
 
 }
