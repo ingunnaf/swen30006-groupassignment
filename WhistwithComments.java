@@ -5,6 +5,7 @@ import ch.aplu.jgamegrid.*;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.io.FileReader;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -41,13 +42,17 @@ public class Whist extends CardGame {
 	public boolean rankGreater(Card card1, Card card2) {
 		return card1.getRankId() < card2.getRankId(); // Warning: Reverse rank order of cards (see comment on enum)
 	}
+	
 
-	private final String version = "1.0";
-	public final int nbPlayers = 4;
-	public final int nbStartCards = 13;
-	public final int winningScore = 11;
-	private final int handWidth = 400;
-	private final int trickWidth = 40;
+	private static String version;
+	public static int nbPlayers;
+	public static int nbStartCards;
+	public static int winningScore;
+	private static int handWidth;
+	private static int trickWidth;
+	private static int thinkingTime;
+	private static boolean enforceRules;
+	
 	private final Deck deck = new Deck(Suit.values(), Rank.values(), "cover");
 	private final Location[] handLocations = {
 			new Location(350, 625),
@@ -68,11 +73,9 @@ public class Whist extends CardGame {
 
 	private final Location trickLocation = new Location(350, 350); //dont move
 	private final Location textLocation = new Location(350, 450); //dont move
-	private final int thinkingTime = 2000;
 	private Hand[] hands; //used to deal out the deck, but subsequently the hands are stored within players
 	private Location hideLocation = new Location(-500, - 500);
 	private Location trumpsActorLocation = new Location(50, 50);
-	private boolean enforceRules=false; //properties
 
 	public void setStatus(String string) { setStatusText(string); }
 
@@ -253,8 +256,33 @@ public class Whist extends CardGame {
 
 	public static void main(String[] args)
 	{
+		Properties whistProperties = new Properties();
+		  
+		  //Read properties
+		  FileReader inStream = null;
+		  try {
+			  inStream = new FileReader("whist.properties");
+			  whistProperties.load(inStream);
+		  } finally {
+			  if (inStream != null) {
+				  inStream.close();
+				  }
+		  }
+		  
+
+		version = whistProperties.getProperty("version");
+		nbPlayers = Integer.parseInt(whistProperties.getProperty("nbPlayers"));
+		nbStartCards = Integer.parseInt(whistProperties.getProperty("nbStartCards"));
+		winningScore = Integer.parseInt(whistProperties.getProperty("winningScore"));
+		handWidth = Integer.parseInt(whistProperties.getProperty("handWidth"));
+		trickWidth = Integer.parseInt(whistProperties.getProperty("trickWidth"));
+		thinkingTime = Integer.parseInt(whistProperties.getProperty("thinkingTime"));
+		enforceRules = Boolean.parseBoolean(whistProperties.getProperty("enforceRules"));
+		//End read properties
+		  
 		// System.out.println("Working Directory = " + System.getProperty("user.dir"));
-		new Whist();
+	    new Whist();
+	    
 	}
 
 }
