@@ -40,5 +40,9 @@ public class LegalNPC extends AbstractPlayer {
         int x = random.nextInt(this.getHand().getNumberOfCards());
         return this.getHand().get(x);
     }
+    
+    public String getType() {
+        return "legal";
+    }
 
 }
